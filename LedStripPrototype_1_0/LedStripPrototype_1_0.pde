@@ -29,5 +29,6 @@ void setup(){
 }
 
 void draw(){
+  
   strip.display();
 }
