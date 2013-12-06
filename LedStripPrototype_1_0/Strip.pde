@@ -7,7 +7,11 @@ public class Strip
   private float width;
   public Led[] leds;
 
-
+  PVector location;
+  PVector velocity;
+  PVector acceleration;
+  float mass;
+  
   //--------------------------------------
   //  CONSTRUCTOR
   //--------------------------------------
@@ -56,4 +60,20 @@ public class Strip
   public Led getLed(int i) {
     return leds[i];
   }
+
+  public void applyForce(PVector force) {
+    PVector f = PVector.div(force,mass);
+    acceleration.add(f);
+  }
+
+  public void update() {
+    velocity.add(acceleration);
+    location.add(velocity);
+    acceleration.mult(0);
+    
+    // Simple friction
+    velocity.mult(0.95);
+    
+  }
+
 }

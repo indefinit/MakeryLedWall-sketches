@@ -12,26 +12,25 @@ AudioInput in;
 FFT fftLin;
 FFT fftLog;
 int spectrumScale = 4; // scaling value for our spectrum
-float pitch;
+
 int r,g,b;
-color ledColor = color(255,255,255,100);
+color ledColor = color(255,255,255,100); //default led color unless otherwise set
 
 Strip strip;
 Strip fireballStrip;
 
 int ledN = 60; //change this to increase | decrease number of leds
-int fftN = ledN*2; //double the led number
+int location = 0; //led location index in strip.  Used for determining curr position.
 
 void setup(){
   size(1024, 512);
   background(255);
   
   minim = new Minim(this);
-  // use the getLineIn method of the Minim object to get an AudioInput
-  in = minim.getLineIn();
+  in = minim.getLineIn();// use the getLineIn method of the Minim object to get an AudioInput
   
   // uncomment this line to *hear* what is being monitored, in addition to seeing it
-  in.enableMonitoring();
+  //in.enableMonitoring();
   
   // create an FFT object that has a time-domain buffer the same size as jingle's sample buffer
   // note that this needs to be a power of two 
@@ -39,8 +38,8 @@ void setup(){
   // see the online tutorial for more info.
   fftLin = new FFT( in.bufferSize(), in.sampleRate() );
   
-  // calculate the averages by grouping frequency bands linearly. set to same number as LEDS in Strip
-  fftLin.linAverages(fftN);
+  // calculate the averages by grouping frequency bands linearly. set to double the LEDs in strip
+  fftLin.linAverages(ledN*2);
 
 
   // create an FFT object for calculating logarithmically spaced averages
@@ -74,37 +73,32 @@ void draw(){
   
   // draw the waveforms so we can see what we are monitoring
   for(int i = 0; i < fftLog.avgSize(); i++){
-    //println(i);
-    
     centerFrequency    = fftLog.getAverageCenterFrequency(i);
-    // how wide is this average in Hz?
-    float averageWidth = fftLog.getAverageBandWidth(i);   
-      
-      // we calculate the lowest and highest frequencies
-      // contained in this average using the center frequency
-      // and bandwidth of this average.
-      float lowFreq  = centerFrequency - averageWidth/2;
-      float highFreq = centerFrequency + averageWidth/2;
-      
-      // freqToIndex converts a frequency in Hz to a spectrum band index
-      // that can be passed to getBand. in this case, we simply use the 
-      // index as coordinates for the rectangle we draw to represent
-      // the average.
-      int xl = (int)fftLog.freqToIndex(lowFreq);
-      int xr = (int)fftLog.freqToIndex(highFreq);
-
     int fftLogBucket = int(map(fftLog.getAvg(i), 0, 10, 0, 255));
     int fftLinBucket = int(map(fftLin.getAvg(i), 0, 10, 0, 255));
-    //println(fftLogBucket);
+    // Uncomment this to do linear averaging
     //strip.getLed(i-60).setLedColor(pitchToColor(fftLinBucket));
     strip.getLed(i).setLedColor(pitchToColor(fftLogBucket));
   }
   //display our frequency spectrum strip
   strip.display(); 
   
-  for(int i = 0; i < ledN; i++){
-    fireballStrip.getLed(i).setLedColor(ampToColor(in.left.get(i)));
-  }
+  /////////////////////////////////////////////////////////////////
+  /// Fireball strip 
+  /// @TODO need to do something with boundary vector and write an applyForce(PVector posVect) method.
+  // if (location > ledN-1){
+  //   PVector boundary = new PVector(1,0);
+  //   fireballStrip.applyForce(boundary);
+  //   fireballStrip.getLed(location+1).setLedColor(pitchToColor(fftLogBucket));    
+  // }
+  // else if (location < ledN-1){
+  //   PVector boundary = new PVector(1,0);
+  //   fireballStrip.applyForce(boundary);
+  //   fireballStrip.getLed(location+1).setLedColor(pitchToColor(fftLogBucket));
+  // }
+
+  //@TODO create update method to update pixel pos
+  //fireballStrip.update();
   //display our fireball strip
   fireballStrip.display();
 }
