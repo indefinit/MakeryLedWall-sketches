@@ -23,7 +23,7 @@ int ledN = 60; //change this to increase | decrease number of leds
 int fftN = ledN*2; //double the led number
 
 void setup(){
-  size(512, 512);
+  size(1024, 512);
   background(255);
   
   minim = new Minim(this);
@@ -60,7 +60,7 @@ void setup(){
    *   4. strip width
    */
   strip = new Strip(ledN, 20, (height/2)-20, width-40);  
-  fireballStrip = new Strip(ledN, 20, (height/2)-40, width-40);
+  fireballStrip = new Strip(ledN, 20, (height/2)-100, width-40);
   
   
 }
@@ -102,7 +102,6 @@ void draw(){
   //display our frequency spectrum strip
   strip.display(); 
   
-  
   for(int i = 0; i < ledN; i++){
     fireballStrip.getLed(i).setLedColor(ampToColor(in.left.get(i)));
   }
@@ -140,17 +139,17 @@ int ampToColor(float data){
   println(data);
   int dataMapped = int(map(data, -1, 1, 0, 255));
   
-  if (dataMapped < 130){
+  if (dataMapped < 140){
     r = 0;
     g = 0;
     b = 0;
   }
-  else if(dataMapped >= 135 && dataMapped < 145) {
+  else if(dataMapped >= 140 && dataMapped < 175) {
     r = 0;
     g = dataMapped;
     b = 0; 
   } 
-  else if(dataMapped >= 145 && dataMapped < 200) {
+  else if(dataMapped >= 175 && dataMapped < 200) {
    r = dataMapped; 
    g = dataMapped;
    b = 0;
