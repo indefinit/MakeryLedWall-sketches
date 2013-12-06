@@ -30,7 +30,6 @@ public class Strip
   //  METHODS
   //--------------------------------------
   public void display() {
-    background(255);
     noFill();
     stroke(0);
     pushMatrix();
@@ -57,9 +56,4 @@ public class Strip
   public Led getLed(int i) {
     return leds[i];
   }
-  
-//  public int distance() {
-//     ledDistance = int(map(mouseX,0,width,0,leds.length))-5; //##for some reason if i don't subtract by 5 here, array goes out of bounds?
-//    return ledDistance;
-//  }
 }

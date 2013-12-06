@@ -11,11 +11,14 @@ Minim minim;
 AudioInput in;
 FFT fftLin;
 FFT fftLog;
-float spectrumScale = 4; // scaling value for our spectrum
+int spectrumScale = 4; // scaling value for our spectrum
 float pitch;
 int r,g,b;
 color ledColor = color(255,255,255,100);
+
 Strip strip;
+Strip fireballStrip;
+
 int ledN = 60; //change this to increase | decrease number of leds
 int fftN = ledN*2; //double the led number
 
@@ -37,7 +40,16 @@ void setup(){
   fftLin = new FFT( in.bufferSize(), in.sampleRate() );
   
   // calculate the averages by grouping frequency bands linearly. set to same number as LEDS in Strip
-  fftLin.linAverages(fftN); 
+  fftLin.linAverages(fftN);
+
+
+  // create an FFT object for calculating logarithmically spaced averages
+  fftLog = new FFT( in.bufferSize(), in.sampleRate() );
+  
+  // calculate averages based on a miminum octave width of 22 Hz
+  // split each octave into three bands
+  // this should result in 60 averages
+  fftLog.logAverages( 22, 6 ); 
   
   /**
    * Strip
@@ -48,50 +60,107 @@ void setup(){
    *   4. strip width
    */
   strip = new Strip(ledN, 20, (height/2)-20, width-40);  
-  int grayscaleCol = 0; // hack this line to change the led colors
+  fireballStrip = new Strip(ledN, 20, (height/2)-40, width-40);
+  
+  
 }
 
 void draw(){
+  
+  float centerFrequency = 0;
+
   fftLin.forward( in.left );
+  fftLog.forward(in.left);
   
   // draw the waveforms so we can see what we are monitoring
-  for(int i = ledN; i < fftLin.avgSize(); i++){
+  for(int i = 0; i < fftLog.avgSize(); i++){
+    //println(i);
     
-    int fftBucket = int(map(fftLin.getAvg(i), 0, 10, 0, 255));
-    strip.getLed(i-60).setLedColor(pitchToColor(fftBucket));
+    centerFrequency    = fftLog.getAverageCenterFrequency(i);
+    // how wide is this average in Hz?
+    float averageWidth = fftLog.getAverageBandWidth(i);   
+      
+      // we calculate the lowest and highest frequencies
+      // contained in this average using the center frequency
+      // and bandwidth of this average.
+      float lowFreq  = centerFrequency - averageWidth/2;
+      float highFreq = centerFrequency + averageWidth/2;
+      
+      // freqToIndex converts a frequency in Hz to a spectrum band index
+      // that can be passed to getBand. in this case, we simply use the 
+      // index as coordinates for the rectangle we draw to represent
+      // the average.
+      int xl = (int)fftLog.freqToIndex(lowFreq);
+      int xr = (int)fftLog.freqToIndex(highFreq);
+
+    int fftLogBucket = int(map(fftLog.getAvg(i), 0, 10, 0, 255));
+    int fftLinBucket = int(map(fftLin.getAvg(i), 0, 10, 0, 255));
+    //println(fftLogBucket);
+    //strip.getLed(i-60).setLedColor(pitchToColor(fftLinBucket));
+    strip.getLed(i).setLedColor(pitchToColor(fftLogBucket));
   }
-  
+  //display our frequency spectrum strip
   strip.display(); 
   
+  
+  for(int i = 0; i < ledN; i++){
+    fireballStrip.getLed(i).setLedColor(ampToColor(in.left.get(i)));
+  }
+  //display our fireball strip
+  fireballStrip.display();
 }
 
 int pitchToColor(int data){
-  int pitchScale = data;
-
-  println(data); 
-  
-  if (pitchScale < 10){
+  if (data < 10){
     r = 0;
     g = 0;
     b = 0;
   }
-  else if(pitchScale >= 10 && pitchScale < 85) {
-    r = pitchScale * 3; 
-    g = 255 - pitchScale * 3; 
-    b = 0;
-
+  else if(data >= 10 && data < 85) {
+    r = 0;
+    g = data;
+    b = 255 - data; 
   } 
-  else if(pitchScale >= 85 && pitchScale < 170) {
-   r = 255 - pitchScale * 3; 
+  else if(data >= 85 && data < 170) {
+   r = 255 - data; 
    g = 0;
-   b = pitchScale * 3;
+   b = data;
 
   } 
   else {
-   r = 0;
-   g = pitchScale * 3;
-   b = 255 - pitchScale * 3;
+   r = data; 
+   g = 255 - data; 
+   b = 0;
   }
   ledColor = color(r,g,b); 
   return ledColor;
+}
+
+int ampToColor(float data){
+  println(data);
+  int dataMapped = int(map(data, -1, 1, 0, 255));
+  
+  if (dataMapped < 130){
+    r = 0;
+    g = 0;
+    b = 0;
+  }
+  else if(dataMapped >= 135 && dataMapped < 145) {
+    r = 0;
+    g = dataMapped;
+    b = 0; 
+  } 
+  else if(dataMapped >= 145 && dataMapped < 200) {
+   r = dataMapped; 
+   g = dataMapped;
+   b = 0;
+
+  } 
+  else {
+   r = dataMapped; 
+   g = 0; 
+   b = 0;
+  }
+  int ampColor = color(r,g,b); 
+  return ampColor;
 }
