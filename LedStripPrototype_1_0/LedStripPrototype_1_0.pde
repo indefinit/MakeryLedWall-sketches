@@ -12,10 +12,12 @@ AudioInput in;
 FFT fftLin;
 FFT fftLog;
 float spectrumScale = 4; // scaling value for our spectrum
-
+float pitch;
+int r,g,b;
+color ledColor = color(255,255,255,100);
 Strip strip;
 int ledN = 60; //change this to increase | decrease number of leds
-
+int fftN = ledN*2; //double the led number
 
 void setup(){
   size(512, 512);
@@ -35,7 +37,7 @@ void setup(){
   fftLin = new FFT( in.bufferSize(), in.sampleRate() );
   
   // calculate the averages by grouping frequency bands linearly. set to same number as LEDS in Strip
-  fftLin.linAverages(ledN); 
+  fftLin.linAverages(fftN); 
   
   /**
    * Strip
@@ -47,20 +49,49 @@ void setup(){
    */
   strip = new Strip(ledN, 20, (height/2)-20, width-40);  
   int grayscaleCol = 0; // hack this line to change the led colors
-  
-  for (int i = 0; i<strip.size; i++){ // loop through our led strip
-    strip.getLed(i).setLedColor(color(grayscaleCol += 4)); // +=1 degrades grayscale value over loop
-  }
 }
 
 void draw(){
   fftLin.forward( in.left );
   
   // draw the waveforms so we can see what we are monitoring
-  for(int i = 0; i < fftLin.avgSize(); i++){
-    println(int(map(fftLin.getAvg(i), 0, 10, 0, 255)));
+  for(int i = ledN; i < fftLin.avgSize(); i++){
+    
+    int fftBucket = int(map(fftLin.getAvg(i), 0, 10, 0, 255));
+    strip.getLed(i-60).setLedColor(pitchToColor(fftBucket));
   }
   
   strip.display(); 
   
+}
+
+int pitchToColor(int data){
+  int pitchScale = data;
+
+  println(data); 
+  
+  if (pitchScale < 10){
+    r = 0;
+    g = 0;
+    b = 0;
+  }
+  else if(pitchScale >= 10 && pitchScale < 85) {
+    r = pitchScale * 3; 
+    g = 255 - pitchScale * 3; 
+    b = 0;
+
+  } 
+  else if(pitchScale >= 85 && pitchScale < 170) {
+   r = 255 - pitchScale * 3; 
+   g = 0;
+   b = pitchScale * 3;
+
+  } 
+  else {
+   r = 0;
+   g = pitchScale * 3;
+   b = 255 - pitchScale * 3;
+  }
+  ledColor = color(r,g,b); 
+  return ledColor;
 }

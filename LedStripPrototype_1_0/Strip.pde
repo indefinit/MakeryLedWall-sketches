@@ -38,9 +38,9 @@ public class Strip
     rect(0, 0, width, height); //our led holder rectangle
 
     float startX = 0.0;
-    for (int i = 0; i<distance(); i++){
+    for (int i = 0; i<size; i++){
       fill(leds[i].getColor()); //fill in each led with color
-      if (i == 1){
+      if (i == 0){
         rect(0, 0, (width/leds.length), height); //##this makes the second led light up first, and the first one second. lets fix.
       } 
       else {
@@ -58,8 +58,8 @@ public class Strip
     return leds[i];
   }
   
-  public int distance() {
-     ledDistance = int(map(mouseX,0,width,0,leds.length))-5; //##for some reason if i don't subtract by 5 here, array goes out of bounds?
-    return ledDistance;
-  }
+//  public int distance() {
+//     ledDistance = int(map(mouseX,0,width,0,leds.length))-5; //##for some reason if i don't subtract by 5 here, array goes out of bounds?
+//    return ledDistance;
+//  }
 }
